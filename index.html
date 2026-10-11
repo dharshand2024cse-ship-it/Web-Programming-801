@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Shopping Assistant — Smart Mart Indoor Navigator</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Crect width='28' height='28' rx='8' fill='%23E8821E'/%3E%3Cpath d='M7 9h2l1.6 7.4a1.4 1.4 0 0 0 1.4 1.1h6.4a1.4 1.4 0 0 0 1.4-1.1L21.4 11H10.2' stroke='white' stroke-width='1.7' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='12.6' cy='19.6' r='1.3' fill='white'/%3E%3Ccircle cx='18' cy='19.6' r='1.3' fill='white'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <svg class="brand-mark" width="30" height="30" viewBox="0 0 28 28" aria-hidden="true">
+        <rect width="28" height="28" rx="8" fill="#E8821E"/>
+        <path d="M7 9h2l1.6 7.4a1.4 1.4 0 0 0 1.4 1.1h6.4a1.4 1.4 0 0 0 1.4-1.1L21.4 11H10.2" stroke="#fff" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="12.6" cy="19.6" r="1.3" fill="#fff"/>
+        <circle cx="18" cy="19.6" r="1.3" fill="#fff"/>
+      </svg>
+      <span>AI Shopping Assistant</span>
+    </div>
+    <nav class="main-nav">
+      <button class="nav-link active" data-section="home">Home</button>
+      <button class="nav-link" data-section="app">Start Shopping</button>
+      <button class="nav-link" data-section="about">About &amp; Viva Prep</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <!-- ================= HOME ================= -->
+  <section id="home" class="page active">
+    <div class="hero">
+      <div class="hero-content">
+        <span class="eyebrow">Artificial Intelligence in Smart Retail</span>
+        <h1>🛒 AI Shopping Assistant</h1>
+        <p class="hero-tagline">Your smart guide to faster shopping.</p>
+        <p class="hero-desc">
+          Find products quickly, follow the shortest indoor route, and complete your shopping
+          with ease — a Google-Maps-style indoor navigator for a Tamil Nadu supermarket, powered
+          by real A* pathfinding. No GPS. No Google Maps API. Just a smarter way around the aisles.
+        </p>
+        <div class="hero-buttons">
+          <button class="btn btn-primary btn-large" data-section="app">Start Shopping →</button>
+          <button class="btn btn-ghost btn-large" data-section="about">View How It Works</button>
+        </div>
+        <div class="hero-stats">
+          <div><strong>A*</strong><span>Search Algorithm</span></div>
+          <div><strong>Manhattan</strong><span>Distance Heuristic</span></div>
+          <div><strong id="products-count">90</strong><span>Products Mapped</span></div>
+          <div><strong>4</strong><span>Billing Counters</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      <h2 class="section-title">How It Works</h2>
+      <div class="how-it-works-grid">
+        <div class="step-card"><span class="step-num">1️⃣</span><h3>Select Products</h3><p>Choose everything you want to buy.</p></div>
+        <div class="step-card"><span class="step-num">2️⃣</span><h3>Find Locations</h3><p>The system identifies where each product is located.</p></div>
+        <div class="step-card"><span class="step-num">3️⃣</span><h3>Calculate Route</h3><p>A* Search calculates an efficient path.</p></div>
+        <div class="step-card"><span class="step-num">4️⃣</span><h3>Follow Guidance</h3><p>Get map-based and text-based directions.</p></div>
+        <div class="step-card"><span class="step-num">5️⃣</span><h3>Reach Billing</h3><p>The system guides you to the nearest billing counter.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= APP (MAP + GUIDANCE) ================= -->
+  <section id="app" class="page">
+    <div class="app-shell">
+
+      <!-- LEFT / MAIN: the indoor map -->
+      <div class="map-pane">
+        <div class="map-toolbar">
+          <span class="map-title">🗺️ Smart Mart — Live Floor Map</span>
+          <div class="map-controls">
+            <button id="zoom-out-btn" class="map-tool-btn" aria-label="Zoom out">−</button>
+            <button id="zoom-in-btn" class="map-tool-btn" aria-label="Zoom in">+</button>
+            <button id="recenter-btn" class="map-tool-btn" aria-label="Recenter">⤾ Recenter</button>
+          </div>
+        </div>
+        <div id="map-container" class="map-container"></div>
+        <div id="product-popup" class="product-popup hidden"></div>
+        <div class="map-legend">
+          <span>🟢 Entrance</span><span>🔴 Billing</span><span>🔵 Selected Product</span>
+          <span>🔵 Thick line = A* Route</span><span>⬛ Shelf / Obstacle</span>
+        </div>
+      </div>
+
+      <!-- RIGHT: search+list, OR turn-by-turn guidance -->
+      <aside class="side-panel">
+
+        <!-- STATE A: build the shopping list -->
+        <div id="panel-list-builder">
+          <div class="search-bar">
+            <input type="text" id="product-search" placeholder="🔍 Search products (try “rice” or “soap”)" />
+          </div>
+          <div id="category-chips" class="chip-row"></div>
+
+          <div id="product-results" class="product-results"></div>
+
+          <div class="shopping-list-panel">
+            <div class="panel-header">
+              <h2>🧾 My Shopping List (<span id="list-count">0</span>)</h2>
+              <button id="clear-list-btn" class="btn btn-ghost btn-small">Clear</button>
+            </div>
+            <ul id="shopping-list" class="shopping-list"></ul>
+            <div class="list-total-row">
+              <span>Estimated Total</span>
+              <strong id="list-total">₹0</strong>
+            </div>
+
+            <label class="billing-select-label" for="billing-select">💳 Billing Counter</label>
+            <select id="billing-select" class="billing-select">
+              <option value="billing1" selected>Billing Counter 1 (default)</option>
+              <option value="billing2">Billing Counter 2</option>
+              <option value="billing3">Billing Counter 3</option>
+              <option value="selfcheckout">Self Checkout</option>
+              <option value="nearest">Nearest (Auto-select)</option>
+            </select>
+
+            <button id="find-route-btn" class="btn btn-primary btn-large" disabled>🚀 Find Best Route</button>
+          </div>
+        </div>
+
+        <!-- STATE B: turn-by-turn navigation guidance -->
+        <div id="panel-navigation-guidance" class="hidden">
+          <div class="panel-header">
+            <h2>🧭 Navigation Guidance</h2>
+            <button id="edit-list-btn" class="btn btn-ghost btn-small">✏️ Edit List</button>
+          </div>
+          <p id="route-explainer" class="section-sub">Turn-by-turn directions, generated live from the A* route.</p>
+
+          <ol id="instructions-list" class="instructions-list"></ol>
+
+          <div class="guidance-controls">
+            <button id="prev-step-btn" class="btn btn-ghost btn-small">⟵ Prev</button>
+            <span id="step-indicator">Step 1 of 1</span>
+            <button id="next-step-btn" class="btn btn-ghost btn-small">Next ⟶</button>
+          </div>
+          <button id="animate-btn" class="btn btn-secondary">▶ Start Walking Animation</button>
+
+          <div id="route-summary" class="route-summary"></div>
+
+          <button id="complete-shopping-btn" class="btn btn-primary btn-large">🎉 Complete Shopping</button>
+
+          <div id="shopping-summary" class="summary-card hidden">
+            <h2>✅ Shopping Completed!</h2>
+            <ul id="summary-product-list" class="summary-product-list"></ul>
+            <p><strong>Total Distance:</strong> <span id="summary-distance">0</span> steps</p>
+            <p><strong>Destination:</strong> <span id="summary-destination">Billing Counter 1</span></p>
+          </div>
+        </div>
+
+      </aside>
+    </div>
+  </section>
+
+  <!-- ================= ABOUT & VIVA PREP ================= -->
+  <section id="about" class="page">
+    <div class="container">
+      <h1>About This Project</h1>
+      <div class="about-grid">
+        <div class="about-item"><h3>Project Name</h3><p>AI Shopping Assistant</p></div>
+        <div class="about-item"><h3>Domain</h3><p>Artificial Intelligence in Smart Retail</p></div>
+        <div class="about-item"><h3>Algorithm</h3><p>A* (A-Star) Search</p></div>
+        <div class="about-item"><h3>Heuristic</h3><p>Manhattan Distance</p></div>
+        <div class="about-item"><h3>Navigation</h3><p>Indoor Google Maps-style + Text</p></div>
+      </div>
+      <div class="about-prose">
+        <h3>Problem</h3>
+        <p>Customers spend too much time searching for products in large supermarkets due to the lack of an efficient navigation system.</p>
+        <h3>Solution</h3>
+        <p>The system calculates an efficient route to every selected product and the nearest billing counter, then shows it both as a live route drawn on the store map and as dynamically generated step-by-step text guidance.</p>
+      </div>
+
+      <h1 class="viva-heading">🎓 Viva / Presentation Prep</h1>
+      <p class="section-sub">Tap a question to reveal a clear, confident answer.</p>
+      <div class="viva-list">
+        <details class="viva-item">
+          <summary>1. Why is A* Search used for this project?</summary>
+          <p>A* combines the actual distance already travelled, g(n), with an estimated distance to the destination, h(n). Because it always expands the node with the lowest f(n) = g(n) + h(n), it finds an efficient path toward the goal instead of blindly exploring in every direction, so it reaches the destination while checking far fewer nodes than an uninformed search.</p>
+        </details>
+        <details class="viva-item">
+          <summary>2. What does "heuristic" mean?</summary>
+          <p>A heuristic is an estimate or rule of thumb used to guide a search toward a goal faster, without needing to explore everything first. In A*, h(n) estimates how far a node is from the goal so the algorithm can prioritise the most promising nodes first.</p>
+        </details>
+        <details class="viva-item">
+          <summary>3. Why is Manhattan Distance a suitable heuristic here?</summary>
+          <p>The supermarket navigation only allows horizontal and vertical movement between walkable points - never diagonally - so Manhattan Distance (|x1−x2| + |y1−y2|) matches exactly how movement cost accumulates. It also never overestimates the true remaining distance, which is the admissibility property A* needs to guarantee the shortest path.</p>
+        </details>
+        <details class="viva-item">
+          <summary>4. Why isn't BFS used for the final implementation?</summary>
+          <p>BFS searches level by level with no sense of "direction" toward the goal, so on a large store graph it may explore many unnecessary locations before reaching the target. A* uses the heuristic to search purposefully toward the destination, so it's far more efficient while still guaranteeing the shortest path when the heuristic is admissible - which Manhattan Distance is here.</p>
+        </details>
+        <details class="viva-item">
+          <summary>5. Why isn't DFS used for the final implementation?</summary>
+          <p>DFS does not guarantee the shortest path at all - it can commit to a long branch of the graph before ever finding the goal, and has no concept of cost. A* always tracks g(n), h(n) and f(n) for every node it considers, so it provably returns the optimal route instead of just "a" route.</p>
+        </details>
+        <details class="viva-item">
+          <summary>6. How is the supermarket represented internally?</summary>
+          <p>As a graph/grid (see data/supermarketMap.js): a 2D array where each cell is 0 (walkable floor) or 1 (a shelf/wall). Eleven rectangular sections (Grocery, Masala, Snacks, Dairy, ...) are laid out in a table with walking corridors between them, and the Entrance, every product, and all four Billing Counters are each pinned to a specific (x, y) coordinate. The map you see on screen is a styled drawing on top of this graph - the raw grid itself is never shown to the customer.</p>
+        </details>
+        <details class="viva-item">
+          <summary>7. How are shelf obstacles handled?</summary>
+          <p>Every section has a shelf-rack obstacle carved through its middle. When A* looks at a node's neighbours (getWalkableNeighbors), it only accepts neighbouring cells that are inside the grid AND whose value is 0. A cell marked 1 is never offered as a neighbour, so the algorithm is automatically forced to route around it via the open aisles and corridors - obstacles are never special-cased, they just make certain edges of the graph unavailable.</p>
+        </details>
+        <details class="viva-item">
+          <summary>8. How are the route line and text instructions generated dynamically?</summary>
+          <p>For multiple products, a nearest-neighbour rule first decides a sensible visiting order from the Entrance, and the nearest suitable Billing Counter is chosen by comparing the real A* distance to each of the four counters. A* then computes the shortest path for every leg of the trip, and all the legs are joined into one path. That single list of coordinates is used twice: mapRenderer.js converts it straight into the SVG route line and arrows, and navigationInstructions.js walks through the same coordinates, grouping consecutive same-direction moves and detecting left/right turns, to write the turn-by-turn text - so the map and the text are always guaranteed to describe the exact same route, because they come from the exact same A* output.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <p>AI Shopping Assistant — Artificial Intelligence in Smart Retail · Real A* Search · No Google Maps API · No GPS</p>
+</footer>
+
+<script src="js/data/supermarketMap.js"></script>
+<script src="js/data/products.js"></script>
+<script src="js/algorithms/astar.js"></script>
+<script src="js/utils/navigationInstructions.js"></script>
+<script src="js/components/mapRenderer.js"></script>
+<script src="js/components/guidancePanel.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
